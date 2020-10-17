@@ -1,0 +1,32 @@
+version: '3'
+
+networks:
+  test:
+
+services:
+  demo-app:
+    container_name: demo-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    depends_on:
+      - mongo
+    networks:
+      - test
+    command: java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Djava.security.egd=file:/dev/./urandom -jar demo-app.jar
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: echo 'db.stats().ok' | mongo localhost:27017/demo-app quiet
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - test
